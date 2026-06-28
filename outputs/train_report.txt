@@ -1,0 +1,8 @@
+OVER25 ULTRA FREE - TRAIN REPORT
+Dataset filas: 10,374
+Over2.5 rate: 0.481
+Poisson config: {'avg_total_goals': 2.675631386157702, 'process_to_goal': 0.105}
+ML trained: True
+Backend: lightgbm
+Calibración: {'brier': 0.2401541977912885, 'accuracy': 0.5799708313077298, 'roc_auc': 0.6159898856365826, 'calibration_rows': 2057, 'calibration_method': 'sigmoid_holdout_temporal'}
+Modelo guardado: D:\Mundial\gptsystem4\over25_ultra_free_project_FIX2_src\outputs\model_artifact_ultra.pkl

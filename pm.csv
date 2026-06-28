@@ -1,0 +1,74 @@
+equipo_local,equipo_visitante,sede,fase,fecha,neutral,dias_descanso_local,dias_descanso_visitante,peso_torneo,hora,goles_local,goles_visitante,goles_totales,resultado_real_ou25
+Mexico,South Africa,Mundial 2026,Group A,2026-06-11,1,7,7,1.0,21:00,2,0,2,UNDER 2.5
+South Korea,Czech Republic,Mundial 2026,Group A,2026-06-12,1,7,7,1.0,04:00,2,1,3,OVER 2.5
+Canada,Bosnia and Herzegovina,Mundial 2026,Group B,2026-06-12,1,7,7,1.0,21:00,1,1,2,UNDER 2.5
+United States,Paraguay,Mundial 2026,Group D,2026-06-13,1,7,7,1.0,03:00,4,1,5,OVER 2.5
+Qatar,Switzerland,Mundial 2026,Group B,2026-06-13,1,7,7,1.0,21:00,1,1,2,UNDER 2.5
+Brazil,Morocco,Mundial 2026,Group C,2026-06-14,1,7,7,1.0,00:00,1,1,2,UNDER 2.5
+Haiti,Scotland,Mundial 2026,Group C,2026-06-14,1,7,7,1.0,03:00,0,1,1,UNDER 2.5
+Australia,Turkey,Mundial 2026,Group D,2026-06-14,1,7,7,1.0,06:00,2,0,2,UNDER 2.5
+Germany,Curacao,Mundial 2026,Group E,2026-06-14,1,7,7,1.0,19:00,7,1,8,OVER 2.5
+Netherlands,Japan,Mundial 2026,Group F,2026-06-14,1,7,7,1.0,22:00,2,2,4,OVER 2.5
+Ivory Coast,Ecuador,Mundial 2026,Group E,2026-06-15,1,7,7,1.0,01:00,1,0,1,UNDER 2.5
+Sweden,Tunisia,Mundial 2026,Group F,2026-06-15,1,7,7,1.0,04:00,5,1,6,OVER 2.5
+Spain,Cape Verde,Mundial 2026,Group H,2026-06-15,1,7,7,1.0,18:00,0,0,0,UNDER 2.5
+Belgium,Egypt,Mundial 2026,Group G,2026-06-15,1,7,7,1.0,21:00,1,1,2,UNDER 2.5
+Saudi Arabia,Uruguay,Mundial 2026,Group H,2026-06-16,1,7,7,1.0,00:00,1,1,2,UNDER 2.5
+Iran,New Zealand,Mundial 2026,Group G,2026-06-16,1,7,7,1.0,03:00,2,2,4,OVER 2.5
+France,Senegal,Mundial 2026,Group I,2026-06-16,1,7,7,1.0,21:00,3,1,4,OVER 2.5
+Iraq,Norway,Mundial 2026,Group I,2026-06-17,1,7,7,1.0,00:00,1,4,5,OVER 2.5
+Argentina,Algeria,Mundial 2026,Group J,2026-06-17,1,7,7,1.0,03:00,3,0,3,OVER 2.5
+Austria,Jordan,Mundial 2026,Group J,2026-06-17,1,7,7,1.0,06:00,3,1,4,OVER 2.5
+Portugal,DR Congo,Mundial 2026,Group K,2026-06-17,1,7,7,1.0,19:00,1,1,2,UNDER 2.5
+England,Croatia,Mundial 2026,Group L,2026-06-17,1,7,7,1.0,22:00,4,2,6,OVER 2.5
+Ghana,Panama,Mundial 2026,Group L,2026-06-18,1,7,7,1.0,01:00,1,0,1,UNDER 2.5
+Uzbekistan,Colombia,Mundial 2026,Group K,2026-06-18,1,7,7,1.0,04:00,1,3,4,OVER 2.5
+Czech Republic,South Africa,Mundial 2026,Group A,2026-06-18,1,7,7,1.0,18:00,1,1,2,UNDER 2.5
+Switzerland,Bosnia and Herzegovina,Mundial 2026,Group B,2026-06-18,1,5,6,1.0,21:00,4,1,5,OVER 2.5
+Canada,Qatar,Mundial 2026,Group B,2026-06-19,1,6,5,1.0,00:00,6,0,6,OVER 2.5
+Mexico,South Korea,Mundial 2026,Group A,2026-06-19,1,7,7,1.0,03:00,1,0,1,UNDER 2.5
+United States,Australia,Mundial 2026,Group D,2026-06-19,1,7,6,1.0,21:00,2,0,2,UNDER 2.5
+Scotland,Morocco,Mundial 2026,Group C,2026-06-20,1,6,6,1.0,00:00,0,1,1,UNDER 2.5
+Brazil,Haiti,Mundial 2026,Group C,2026-06-20,1,6,6,1.0,02:30,3,0,3,OVER 2.5
+Turkey,Paraguay,Mundial 2026,Group D,2026-06-20,1,6,7,1.0,05:00,0,1,1,UNDER 2.5
+Netherlands,Sweden,Mundial 2026,Group F,2026-06-20,1,6,6,1.0,19:00,5,1,6,OVER 2.5
+Germany,Ivory Coast,Mundial 2026,Group E,2026-06-20,1,6,6,1.0,22:00,2,1,3,OVER 2.5
+Ecuador,Curacao,Mundial 2026,Group E,2026-06-21,1,6,6,1.0,02:00,0,0,0,UNDER 2.5
+Tunisia,Japan,Mundial 2026,Group F,2026-06-21,1,6,6,1.0,06:00,0,4,4,OVER 2.5
+Spain,Saudi Arabia,Mundial 2026,Group H,2026-06-21,1,6,6,1.0,18:00,4,0,4,OVER 2.5
+Belgium,Iran,Mundial 2026,Group G,2026-06-21,1,6,6,1.0,21:00,0,0,0,UNDER 2.5
+Uruguay,Cape Verde,Mundial 2026,Group H,2026-06-22,1,6,6,1.0,00:00,2,2,4,OVER 2.5
+New Zealand,Egypt,Mundial 2026,Group G,2026-06-22,1,6,6,1.0,03:00,1,3,4,OVER 2.5
+Argentina,Austria,Mundial 2026,Group J,2026-06-22,1,6,6,1.0,19:00,2,0,2,UNDER 2.5
+France,Iraq,Mundial 2026,Group I,2026-06-22,1,6,6,1.0,23:00,3,0,3,OVER 2.5
+Norway,Senegal,Mundial 2026,Group I,2026-06-23,1,6,6,1.0,02:00,3,2,5,OVER 2.5
+Jordan,Algeria,Mundial 2026,Group J,2026-06-23,1,6,6,1.0,05:00,1,2,3,OVER 2.5
+Portugal,Uzbekistan,Mundial 2026,Group K,2026-06-23,1,6,6,1.0,19:00,5,0,5,OVER 2.5
+England,Ghana,Mundial 2026,Group L,2026-06-23,1,6,6,1.0,22:00,0,0,0,UNDER 2.5
+Panama,Croatia,Mundial 2026,Group L,2026-06-24,1,6,6,1.0,01:00,0,1,1,UNDER 2.5
+Colombia,DR Congo,Mundial 2026,Group K,2026-06-24,1,6,6,1.0,04:00,1,0,1,UNDER 2.5
+Switzerland,Canada,Mundial 2026,Group B,2026-06-24,1,6,6,1.0,21:00,2,1,3,OVER 2.5
+Bosnia and Herzegovina,Qatar,Mundial 2026,Group B,2026-06-24,1,6,6,1.0,21:00,3,1,4,OVER 2.5
+Scotland,Brazil,Mundial 2026,Group C,2026-06-25,1,5,5,1.0,00:00,0,3,3,OVER 2.5
+Morocco,Haiti,Mundial 2026,Group C,2026-06-25,1,5,5,1.0,00:00,4,2,6,OVER 2.5
+Czech Republic,Mexico,Mundial 2026,Group A,2026-06-25,1,6,6,1.0,03:00,0,3,3,OVER 2.5
+South Africa,South Korea,Mundial 2026,Group A,2026-06-25,1,6,6,1.0,03:00,1,0,1,UNDER 2.5
+Ecuador,Germany,Mundial 2026,Group E,2026-06-25,1,5,5,1.0,22:00,2,1,3,OVER 2.5
+Curacao,Ivory Coast,Mundial 2026,Group E,2026-06-25,1,5,5,1.0,22:00,0,2,2,UNDER 2.5
+Tunisia,Netherlands,Mundial 2026,Group F,2026-06-26,1,5,5,1.0,01:00,1,3,4,OVER 2.5
+Japan,Sweden,Mundial 2026,Group F,2026-06-26,1,5,5,1.0,01:00,1,1,2,UNDER 2.5
+Turkey,United States,Mundial 2026,Group D,2026-06-26,1,6,6,1.0,04:00,3,2,5,OVER 2.5
+Paraguay,Australia,Mundial 2026,Group D,2026-06-26,1,6,6,1.0,04:00,0,0,0,UNDER 2.5
+Norway,France,Mundial 2026,Group I,2026-06-26,1,4,4,1.0,21:00,1,4,5,OVER 2.5
+Senegal,Iraq,Mundial 2026,Group I,2026-06-26,1,4,4,1.0,21:00,5,0,5,OVER 2.5
+Uruguay,Spain,Mundial 2026,Group H,2026-06-27,1,5,5,1.0,02:00,0,1,1,UNDER 2.5
+Cape Verde,Saudi Arabia,Mundial 2026,Group H,2026-06-27,1,5,5,1.0,02:00,0,0,0,UNDER 2.5
+New Zealand,Belgium,Mundial 2026,Group G,2026-06-27,1,5,5,1.0,05:00,1,5,6,OVER 2.5
+Egypt,Iran,Mundial 2026,Group G,2026-06-27,1,5,5,1.0,05:00,1,1,2,UNDER 2.5
+Panama,England,Mundial 2026,Group L,2026-06-27,1,4,4,1.0,23:00,0,2,2,UNDER 2.5
+Croatia,Ghana,Mundial 2026,Group L,2026-06-27,1,4,4,1.0,23:00,2,1,3,OVER 2.5
+Colombia,Portugal,Mundial 2026,Group K,2026-06-28,1,4,4,1.0,01:30,0,0,0,UNDER 2.5
+DR Congo,Uzbekistan,Mundial 2026,Group K,2026-06-28,1,4,4,1.0,01:30,3,1,4,OVER 2.5
+Jordan,Argentina,Mundial 2026,Group J,2026-06-28,1,5,5,1.0,04:00,1,3,4,OVER 2.5
+Algeria,Austria,Mundial 2026,Group J,2026-06-28,1,5,5,1.0,04:00,3,3,6,OVER 2.5
+South Africa,Canada,Mundial 2026,Dieciseisavos,2026-06-28,1,4,4,1.0,21:00,0,1,1,UNDER 2.5

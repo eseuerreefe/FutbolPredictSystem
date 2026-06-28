@@ -1,0 +1,8 @@
+OVER25 ULTRA FREE - BUILD REPORT
+Filas dataset: 10,507
+Rango fechas: 2014-01-04 00:00:00 -> 2026-06-27 00:00:00
+Tasa Over 2.5: 0.483
+StatsBomb disponibles: 0
+Equipos: 271
+Archivo dataset: D:\Mundial\gptsystem4\over25_ultra_free_project_FIX2_src\data\processed\dataset_ultra.csv
+Archivo team_state: D:\Mundial\gptsystem4\over25_ultra_free_project_FIX2_src\data\processed\team_state_ultra.csv

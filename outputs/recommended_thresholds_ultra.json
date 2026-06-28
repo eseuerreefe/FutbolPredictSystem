@@ -1,0 +1,17 @@
+{
+  "source": "backtest_oos_grid_fix3_directional",
+  "filter_mode": "directional_consensus",
+  "confidence_threshold": 0.62,
+  "confidence_threshold_strict": 0.64,
+  "directional_margin": 0.04,
+  "under_confirm_ceiling": 0.46,
+  "over_confirm_floor": 0.54,
+  "max_model_discrepancy": null,
+  "bets": 652,
+  "coverage": 0.08949897048730268,
+  "accuracy": 0.6288343558282209,
+  "roi_190": 0.19478527607361965,
+  "profit_190": 127.0,
+  "max_losing_streak": 5,
+  "note": "FIX3: usa consenso direccional 45/55 por defecto. La discrepancia absoluta queda como comparativa legacy, no bloqueo principal."
+}

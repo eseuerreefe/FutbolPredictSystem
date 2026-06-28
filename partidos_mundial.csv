@@ -1,0 +1,56 @@
+equipo_local,equipo_visitante,sede,fase,fecha,neutral,dias_descanso_local,dias_descanso_visitante,peso_torneo
+Mexico,South Africa,Mexico City,Grupo,2026-06-11,0,7,7,1.0
+Korea Republic,Czechia,Guadalajara,Grupo,2026-06-11,1,7,7,1.0
+Canada,Bosnia and Herzegovina,Toronto,Grupo,2026-06-12,0,7,7,1.0
+United States,Paraguay,Los Angeles,Grupo,2026-06-12,0,7,7,1.0
+Haiti,Scotland,Boston,Grupo,2026-06-13,1,7,7,1.0
+Australia,Türkiye,Vancouver,Grupo,2026-06-13,1,7,7,1.0
+Brazil,Morocco,New York,Grupo,2026-06-13,1,7,7,1.0
+Qatar,Switzerland,San Francisco,Grupo,2026-06-13,1,7,7,1.0
+Côte d'Ivoire,Ecuador,Philadelphia,Grupo,2026-06-14,1,7,7,1.0
+Germany,Curaçao,Houston,Grupo,2026-06-14,1,7,7,1.0
+Netherlands,Japan,Dallas,Grupo,2026-06-14,1,7,7,1.0
+Sweden,Tunisia,Monterrey,Grupo,2026-06-14,1,7,7,1.0
+Spain,Cabo Verde,Atlanta,Grupo,2026-06-15,1,7,7,1.0
+IR Iran,New Zealand,Los Angeles,Grupo,2026-06-15,1,7,7,1.0
+Belgium,Egypt,Seattle,Grupo,2026-06-15,1,7,7,1.0
+Saudi Arabia,Uruguay,Miami,Grupo,2026-06-15,1,7,7,1.0
+France,Senegal,New York,Grupo,2026-06-16,1,7,7,1.0
+Iraq,Norway,Boston,Grupo,2026-06-16,1,7,7,1.0
+Argentina,Algeria,Kansas City,Grupo,2026-06-16,1,7,7,1.0
+Austria,Jordan,San Francisco,Grupo,2026-06-16,1,7,7,1.0
+Ghana,Panama,Toronto,Grupo,2026-06-17,1,7,7,1.0
+England,Croatia,Dallas,Grupo,2026-06-17,1,7,7,1.0
+Portugal,Congo DR,Houston,Grupo,2026-06-17,1,7,7,1.0
+Uzbekistan,Colombia,Mexico City,Grupo,2026-06-17,1,7,7,1.0
+Czechia,South Africa,Atlanta,Grupo,2026-06-18,1,7,7,1.0
+Switzerland,Bosnia and Herzegovina,Los Angeles,Grupo,2026-06-18,1,5,6,1.0
+Brazil,Haiti,Philadelphia,Grupo,2026-06-19,1,6,6,1.0
+Türkiye,Paraguay,San Francisco,Grupo,2026-06-19,1,6,7,1.0
+Netherlands,Sweden,Houston,Grupo,2026-06-20,1,6,6,1.0
+Germany,Côte d'Ivoire,Toronto,Grupo,2026-06-20,1,6,6,1.0
+Ecuador,Curaçao,Kansas City,Grupo,2026-06-20,1,6,6,1.0
+Tunisia,Japan,Monterrey,Grupo,2026-06-20,1,6,6,1.0
+Spain,Saudi Arabia,Atlanta,Grupo,2026-06-21,1,6,6,1.0
+Belgium,IR Iran,Los Angeles,Grupo,2026-06-21,1,6,6,1.0
+Uruguay,Cabo Verde,Miami,Grupo,2026-06-21,1,6,6,1.0
+New Zealand,Egypt,Vancouver,Grupo,2026-06-21,1,6,6,1.0
+Argentina,Austria,Dallas,Grupo,2026-06-22,1,6,6,1.0
+France,Iraq,Philadelphia,Grupo,2026-06-22,1,6,6,1.0
+Norway,Senegal,New York,Grupo,2026-06-22,1,6,6,1.0
+Tunisia,Netherlands,Kansas City,Grupo,2026-06-26,1,6,6,1.0
+Japan,Sweden,Arlington,Grupo,2026-06-26,1,6,6,1.0
+Türkiye,United States,Los Angeles,Grupo,2026-06-26,0,7,14,1.0
+Paraguay,Australia,Santa Clara,Grupo,2026-06-26,1,7,13,1.0
+Norway,France,Foxborough,Grupo,2026-06-26,1,4,4,1.0
+Senegal,Iraq,Toronto,Grupo,2026-06-26,1,4,4,1.0
+Cabo Verde,Saudi Arabia,Houston,Grupo,2026-06-27,1,6,6,1.0
+Uruguay,Spain,Zapopan,Grupo,2026-06-27,1,6,6,1.0
+New Zealand,Belgium,Vancouver,Grupo,2026-06-27,1,6,6,1.0
+Egypt,IR Iran,Seattle,Grupo,2026-06-27,1,6,6,1.0
+Panama,England,New York,Grupo,2026-06-27,1,10,10,1.0
+Croatia,Ghana,Philadelphia,Grupo,2026-06-27,1,10,10,1.0
+Colombia,Portugal,Miami,Grupo,2026-06-28,1,11,11,1.0
+Congo DR,Uzbekistan,Atlanta,Grupo,2026-06-28,1,11,11,1.0
+Algeria,Austria,Kansas City,Grupo,2026-06-28,1,12,12,1.0
+Jordan,Argentina,Arlington,Grupo,2026-06-28,1,12,6,1.0
