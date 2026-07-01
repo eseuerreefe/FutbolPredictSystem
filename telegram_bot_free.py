@@ -810,7 +810,23 @@ def main():
     if not FIXTURES_FILE.exists():
         _default_fixtures().to_csv(FIXTURES_FILE, index=False, encoding="utf-8")
 
+    # Refresca los fixtures cada vez que arranca el bot (usa fetch_fixtures.py).
+    # Si hay FOOTBALL_DATA_TOKEN configurado, trae partidos reales de la API.
+    # Si no, cae automáticamente en los datos de fallback (sin romper nada).
+    try:
+        from bot_fixtures_patch import auto_refresh_fixtures, schedule_daily_refresh
+        auto_refresh_fixtures(force=True)
+    except Exception as e:
+        print(f"[telegram_bot_free] No se pudo refrescar fixtures al arrancar: {e}")
+        print("  El bot continuará con el CSV existente.")
+
     app = ApplicationBuilder().token(token).build()
+
+    # Refresco automático diario a las 07:00 (hora del servidor).
+    try:
+        schedule_daily_refresh(app, hour=7, minute=0)
+    except Exception:
+        pass
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("ayuda", ayuda))

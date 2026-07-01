@@ -2,18 +2,19 @@
 fetch_fixtures.py — Generador automático de telegram_fixtures_worldcup.csv
 ==========================================================================
 
-Descarga los partidos próximos del Mundial 2026 (u otras competiciones
-internacionales) y genera el CSV que lee el bot de Telegram.
+Descarga los partidos del Mundial 2026 y genera el CSV que lee el bot de
+Telegram.
 
 FUENTES (en orden de prioridad):
-  1. football-data.org API gratuita  →  registro en https://www.football-data.org/client/register
-     Solo requiere un token gratuito. Límite: 10 req/min, más que suficiente.
+  1. API-Sports / API-Football (v3.football.api-sports.io) → la misma API
+     que usa tu otro bot (autobot900...). Usa el mismo token que ya tienes.
+     Plan gratuito: 100 peticiones/día.
   2. Datos hardcodeados del Mundial 2026 como fallback total.
 
 USO:
-  # Una sola vez: registra el token
-  export FOOTBALL_DATA_TOKEN="tu_token_aqui"   # Linux/Mac
-  set FOOTBALL_DATA_TOKEN=tu_token_aqui         # Windows
+  # Una sola vez: registra el token (el mismo que usa tu otro bot)
+  set FOOTBALL_API_KEY=tu_token_aqui            # Windows
+  export FOOTBALL_API_KEY="tu_token_aqui"       # Linux/Mac
 
   # Ejecutar manualmente:
   python fetch_fixtures.py
@@ -56,14 +57,13 @@ PROJECT_DIR   = Path(__file__).resolve().parent
 OUTPUT_FILE   = PROJECT_DIR / "telegram_fixtures_worldcup.csv"
 CACHE_FILE    = PROJECT_DIR / "telegram_jobs" / "fixtures_cache_raw.json"
 
-# Token gratuito de football-data.org  (variable de entorno o edita aquí)
-FDORG_TOKEN   = os.environ.get("FOOTBALL_DATA_TOKEN", "")
+# Token de API-Sports / API-Football (el mismo que usa tu otro bot, el que SÍ funciona).
+# Se lee de FOOTBALL_API_KEY, o de FOOTBALL_DATA_TOKEN como alias por compatibilidad.
+APISPORTS_TOKEN = os.environ.get("FOOTBALL_API_KEY", "") or os.environ.get("FOOTBALL_DATA_TOKEN", "")
 
-# IDs de competición en football-data.org:
-#   2000 = FIFA World Cup
-#   2018 = UEFA Euro
-#   2016 = Copa América (cuando está disponible)
-COMPETITION_IDS = [2000]
+# World Cup en API-Sports: league id = 1. Temporada/año del torneo.
+WORLDCUP_LEAGUE_ID = 1
+WORLDCUP_SEASON = 2026
 
 # Zona horaria de España para convertir UTC → hora local
 SPAIN_UTC_OFFSET_SUMMER = 2   # CEST (verano, aplica en el Mundial 2026)
@@ -108,6 +108,13 @@ PHASE_MAP: Dict[str, str] = {
     "SEMI_FINALS":              "Semis",
     "THIRD_PLACE":              "Tercer_puesto",
     "FINAL":                    "Final",
+    # api-sports.io campo "round" (texto libre, formato "Round of 32", "Group Stage - 1", etc.)
+    "Round of 32":              "Dieciseisavos",
+    "Round of 16":              "Octavos",
+    "Quarter-finals":           "Cuartos",
+    "Semi-finals":              "Semis",
+    "3rd Place Final":          "Tercer_puesto",
+    "Final":                    "Final",
     # por si acaso
     "Dieciseisavos de final":   "Dieciseisavos",
     "Octavos de final":         "Octavos",
@@ -212,61 +219,54 @@ def _output_is_fresh() -> bool:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# FUENTE 1: football-data.org
+# FUENTE 1: API-Sports / API-Football (la misma que usa tu otro bot)
 # ──────────────────────────────────────────────────────────────────────────────
 
-FDORG_BASE = "https://api.football-data.org/v4"
+APISPORTS_BASE = "https://v3.football.api-sports.io"
 
-def _fdorg_headers() -> dict:
-    return {"X-Auth-Token": FDORG_TOKEN}
+def _apisports_headers() -> dict:
+    return {"x-apisports-key": APISPORTS_TOKEN}
 
 
-def _fdorg_fetch(endpoint: str, params: dict | None = None) -> dict | None:
-    url = f"{FDORG_BASE}/{endpoint}"
+def _apisports_fetch(endpoint: str, params: dict | None = None) -> dict | None:
+    url = f"{APISPORTS_BASE}/{endpoint}"
     try:
-        r = requests.get(url, headers=_fdorg_headers(), params=params or {}, timeout=15)
-        if r.status_code == 429:
-            print("  [football-data.org] Rate limit — esperando 60s...")
-            time.sleep(60)
-            r = requests.get(url, headers=_fdorg_headers(), params=params or {}, timeout=15)
-        if r.status_code == 200:
-            return r.json()
-        print(f"  [football-data.org] HTTP {r.status_code} en {endpoint}")
-        return None
+        r = requests.get(url, headers=_apisports_headers(), params=params or {}, timeout=15)
+        if r.status_code != 200:
+            print(f"  [api-sports] HTTP {r.status_code} en {endpoint}")
+            return None
+        data = r.json()
+        if data.get("errors"):
+            print(f"  [api-sports] Error de la API: {data['errors']}")
+            return None
+        return data
     except Exception as e:
-        print(f"  [football-data.org] Error: {e}")
+        print(f"  [api-sports] Error: {e}")
         return None
 
 
-def fetch_from_fdorg(days_ahead: int = 14) -> List[Dict[str, Any]]:
+def fetch_from_apisports(days_ahead: int = 14) -> List[Dict[str, Any]]:
     """
-    Descarga partidos de las próximas `days_ahead` días de football-data.org.
+    Descarga partidos del Mundial 2026 desde API-Sports (v3.football.api-sports.io).
     Devuelve lista de dicts con las columnas del bot, o [] si falla.
     """
-    if not FDORG_TOKEN:
-        print("  [football-data.org] Sin token — salta esta fuente.")
-        print("  → Regístrate gratis en https://www.football-data.org/client/register")
-        print("    y pon: export FOOTBALL_DATA_TOKEN='tu_token'")
+    if not APISPORTS_TOKEN:
+        print("  [api-sports] Sin token — salta esta fuente.")
+        print("  → Configura: set FOOTBALL_API_KEY=tu_token  (Windows)")
+        print("              export FOOTBALL_API_KEY=tu_token (Linux/Mac)")
         return []
 
-    today     = date.today()
-    date_from = today.isoformat()
-    date_to   = (today + timedelta(days=days_ahead)).isoformat()
+    print(f"  [api-sports] Descargando World Cup (league={WORLDCUP_LEAGUE_ID}, season={WORLDCUP_SEASON})...")
+    data = _apisports_fetch(
+        "fixtures",
+        params={"league": WORLDCUP_LEAGUE_ID, "season": WORLDCUP_SEASON},
+    )
 
-    raw_matches = []
-    for comp_id in COMPETITION_IDS:
-        print(f"  [football-data.org] Descargando competición {comp_id}...")
-        data = _fdorg_fetch(
-            f"competitions/{comp_id}/matches",
-            params={"dateFrom": date_from, "dateTo": date_to, "status": "SCHEDULED,TIMED"},
-        )
-        if data and "matches" in data:
-            raw_matches.extend(data["matches"])
-            print(f"    → {len(data['matches'])} partidos encontrados")
-        time.sleep(0.5)   # respetar rate limit
-
-    if not raw_matches:
+    if not data or not data.get("response"):
         return []
+
+    raw_matches = data["response"]
+    print(f"    → {len(raw_matches)} partidos encontrados")
 
     # Guardar raw en caché
     CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -274,15 +274,100 @@ def fetch_from_fdorg(days_ahead: int = 14) -> List[Dict[str, Any]]:
 
     rows = []
     for m in raw_matches:
-        home = _norm_team(m.get("homeTeam", {}).get("name", "TBD"))
-        away = _norm_team(m.get("awayTeam", {}).get("name", "TBD"))
-        utc_date = m.get("utcDate", "")
+        fixture = m.get("fixture", {})
+        teams = m.get("teams", {})
+        league = m.get("league", {})
+
+        home = _norm_team(teams.get("home", {}).get("name", "TBD"))
+        away = _norm_team(teams.get("away", {}).get("name", "TBD"))
+        utc_date = fixture.get("date", "")
         fecha = utc_date[:10] if utc_date else ""
         hora_esp = _spain_hour(utc_date)
-        stage = m.get("stage", "") or m.get("group", "")
+        stage = league.get("round", "") or ""
         fase = _norm_phase(stage)
-        venue = m.get("venue", "") or ""
-        game_id = str(m.get("id", ""))
+        venue = (fixture.get("venue", {}) or {}).get("name", "") or ""
+        game_id = str(fixture.get("id", ""))
+
+        rows.append({
+            "game_id": game_id,
+            "equipo_local": home,
+            "equipo_visitante": away,
+            "sede": venue,
+            "fase": fase,
+            "fecha": fecha,
+            "hora_espana": hora_esp,
+        })
+
+    return rows
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# FUENTE 0 (prioritaria): ESPN hidden API — gratis, sin token, sin restricción
+# de temporada. Es la misma fuente que usa tu otro bot (autobot900...) en
+# _espn_scrape() para ligas de clubes; aquí usamos el slug fifa.world.
+# ──────────────────────────────────────────────────────────────────────────────
+
+ESPN_WORLDCUP_URL = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard"
+
+ESPN_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/124.0.6367.82 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+}
+
+
+def fetch_from_espn(date_from: str, date_to: str) -> List[Dict[str, Any]]:
+    """
+    Descarga partidos del Mundial 2026 desde el endpoint público de ESPN.
+    date_from / date_to en formato YYYYMMDD. Devuelve [] si falla.
+    """
+    print(f"  [espn] Descargando World Cup ({date_from} → {date_to})...")
+    params = {"limit": 200, "dates": f"{date_from}-{date_to}"}
+    try:
+        r = requests.get(ESPN_WORLDCUP_URL, headers=ESPN_HEADERS, params=params, timeout=15)
+        if r.status_code != 200:
+            print(f"  [espn] HTTP {r.status_code}")
+            return []
+        data = r.json()
+    except Exception as e:
+        print(f"  [espn] Error: {e}")
+        return []
+
+    events = data.get("events", [])
+    if not events:
+        print("  [espn] Sin eventos en ese rango de fechas.")
+        return []
+
+    print(f"    → {len(events)} partidos encontrados")
+
+    rows = []
+    for event in events:
+        comp = (event.get("competitions") or [{}])[0]
+        competitors = comp.get("competitors", [])
+        h = next((c for c in competitors if c.get("homeAway") == "home"), None)
+        a = next((c for c in competitors if c.get("homeAway") == "away"), None)
+        if not h or not a:
+            continue
+
+        home = _norm_team(h.get("team", {}).get("displayName", "TBD"))
+        away = _norm_team(a.get("team", {}).get("displayName", "TBD"))
+
+        utc_date = event.get("date", "")  # ISO8601, ej. "2026-06-29T19:00Z"
+        fecha = utc_date[:10] if utc_date else ""
+        hora_esp = _spain_hour(utc_date)
+
+        venue = (comp.get("venue", {}) or {}).get("fullName", "") or ""
+
+        # ESPN trae la fase en notes / season.slug / event.name según el caso
+        stage = ""
+        notes = comp.get("notes") or []
+        if notes:
+            stage = notes[0].get("headline", "") or ""
+        if not stage:
+            stage = (event.get("season", {}) or {}).get("slug", "") or ""
+        fase = _norm_phase(stage) or "Grupo"
+
+        game_id = str(event.get("id", ""))
 
         rows.append({
             "game_id": game_id,
@@ -377,21 +462,40 @@ def build_fixtures(days_ahead: int = 14, force: bool = False, all_fixtures: bool
         print(f"  {len(df)} fixtures ya en CSV.")
         return df
 
-    # ── Fuente 1: football-data.org ──────────────────────────────────────────
+    # ── Fuente 0: ESPN (gratis, sin token, sin restricción de temporada) ───────
     rows: List[Dict[str, Any]] = []
     days_to_fetch = 90 if all_fixtures else max(days_ahead, 30)
 
-    print("\n[1/2] Intentando football-data.org...")
-    api_rows = fetch_from_fdorg(days_ahead=days_to_fetch)
-    if api_rows:
-        print(f"  ✅ {len(api_rows)} partidos desde API.")
-        rows = api_rows
+    today = date.today()
+    date_from = today.strftime("%Y%m%d")
+    date_to = (today + timedelta(days=days_to_fetch)).strftime("%Y%m%d")
+    # El Mundial 2026 es del 11 jun al 19 jul; si la ventana calculada cae fuera
+    # de ese rango, usamos directamente el rango del torneo para no quedarnos sin datos.
+    TOURNAMENT_START, TOURNAMENT_END = "20260611", "20260719"
+    if date_to < TOURNAMENT_START or date_from > TOURNAMENT_END:
+        date_from, date_to = TOURNAMENT_START, TOURNAMENT_END
+
+    print("\n[1/3] Intentando ESPN...")
+    espn_rows = fetch_from_espn(date_from, date_to)
+
+    api_rows: List[Dict[str, Any]] = []
+    if espn_rows:
+        print(f"  ✅ {len(espn_rows)} partidos desde ESPN.")
+        rows = espn_rows
+        api_rows = espn_rows  # reutiliza la lógica de "viene de API" más abajo
     else:
-        print("  ⚠️  API no disponible. Usando datos hardcodeados del Mundial 2026.")
-        rows = [dict(r) for r in FALLBACK_FIXTURES]
+        print("  ⚠️  ESPN no disponible. Probando api-sports.io...")
+        print("\n[2/3] Intentando api-sports.io...")
+        api_rows = fetch_from_apisports(days_ahead=days_to_fetch)
+        if api_rows:
+            print(f"  ✅ {len(api_rows)} partidos desde API.")
+            rows = api_rows
+        else:
+            print("  ⚠️  API no disponible. Usando datos hardcodeados del Mundial 2026.")
+            rows = [dict(r) for r in FALLBACK_FIXTURES]
 
     # ── Enriquecer con días de descanso ──────────────────────────────────────
-    print("\n[2/2] Calculando días de descanso...")
+    print("\n[3/3] Calculando días de descanso...")
     rows = _enrich_rest_days(rows)
 
     # ── Filtrar por ventana temporal (salvo all_fixtures) ────────────────────
