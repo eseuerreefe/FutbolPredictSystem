@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OVER25 ULTRA — Sistema de predicción de goles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  :root{
+    --pitch-950:#0b2418;
+    --pitch-900:#0f2e1f;
+    --pitch-800:#173a28;
+    --pitch-700:#204a33;
+    --line:#3c5c48;
+    --chalk:#f2f5ef;
+    --chalk-dim:#c7d2c9;
+    --steel:#7f9a8e;
+    --gold:#d9a441;
+    --gold-dim:#a9812f;
+    --alert:#c1502e;
+    --ok:#5b9a6f;
+    --mono:'JetBrains Mono', monospace;
+    --sans:'Inter', sans-serif;
+    --disp:'Oswald', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--pitch-900);
+    color:var(--chalk);
+    font-family:var(--sans);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--gold);color:var(--pitch-950);}
+
+  a{color:var(--gold);}
+
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px;}
+
+  /* ---------- pitch line divider (signature element) ---------- */
+  .pitchline{
+    position:relative;
+    height:64px;
+    width:100%;
+    overflow:hidden;
+  }
+  .pitchline svg{position:absolute;top:0;left:0;width:100%;height:64px;}
+
+  /* ---------- top nav ---------- */
+  header.nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(11,36,24,0.88);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{
+    max-width:1120px;margin:0 auto;padding:16px 28px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .brand{
+    font-family:var(--disp);
+    font-weight:600;
+    letter-spacing:0.04em;
+    font-size:18px;
+    text-transform:uppercase;
+    color:var(--chalk);
+  }
+  .brand span{color:var(--gold);}
+  nav.links{display:flex;gap:28px;}
+  nav.links a{
+    font-family:var(--mono);
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--chalk-dim);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+    padding-bottom:2px;
+  }
+  nav.links a:hover{color:var(--gold);border-bottom-color:var(--gold);}
+  @media (max-width:720px){ nav.links{display:none;} }
+
+  /* ---------- hero ---------- */
+  .hero{
+    padding:88px 0 56px;
+    background:
+      radial-gradient(ellipse 900px 500px at 80% -10%, rgba(217,164,65,0.10), transparent 60%),
+      var(--pitch-900);
+    position:relative;
+  }
+  .kicker{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--gold);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:22px;
+  }
+  .kicker::before{
+    content:"";
+    width:8px;height:8px;border-radius:50%;
+    background:var(--gold);
+    box-shadow:0 0 0 3px rgba(217,164,65,0.2);
+  }
+  h1.headline{
+    font-family:var(--disp);
+    font-weight:700;
+    text-transform:uppercase;
+    font-size:clamp(38px,6vw,68px);
+    line-height:0.98;
+    letter-spacing:0.005em;
+    margin:0 0 24px;
+    max-width:820px;
+  }
+  h1.headline em{
+    font-style:normal;
+    color:var(--gold);
+  }
+  .sub{
+    font-size:18px;
+    color:var(--chalk-dim);
+    max-width:600px;
+    margin:0 0 36px;
+  }
+  .sub b{color:var(--chalk);font-weight:600;}
+
+  .cta-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:56px;}
+  .btn{
+    font-family:var(--mono);
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    padding:13px 22px;
+    border-radius:2px;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    cursor:pointer;
+    border:1px solid var(--line);
+  }
+  .btn-primary{background:var(--gold);color:var(--pitch-950);border-color:var(--gold);font-weight:700;}
+  .btn-primary:hover{background:#ecb857;}
+  .btn-ghost{background:transparent;color:var(--chalk);}
+  .btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+
+  /* scoreboard ticker */
+  .scoreboard{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    border:1px solid var(--line);
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .score-cell{
+    padding:20px 18px;
+    border-right:1px solid var(--line);
+    background:var(--pitch-800);
+  }
+  .score-cell:last-child{border-right:none;}
+  .score-num{
+    font-family:var(--mono);
+    font-size:28px;
+    font-weight:700;
+    color:var(--gold);
+    display:block;
+  }
+  .score-label{
+    font-family:var(--mono);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:var(--steel);
+    margin-top:4px;
+    display:block;
+  }
+  @media (max-width:720px){ .scoreboard{grid-template-columns:repeat(2,1fr);} }
+
+  /* ---------- section shell ---------- */
+  section{padding:64px 0;}
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--steel);
+    margin-bottom:10px;
+  }
+  h2.h-title{
+    font-family:var(--disp);
+    text-transform:uppercase;
+    font-weight:600;
+    font-size:clamp(26px,4vw,38px);
+    margin:0 0 16px;
+    letter-spacing:0.01em;
+  }
+  .lede{
+    color:var(--chalk-dim);
+    max-width:640px;
+    font-size:16px;
+    margin-bottom:44px;
+  }
+
+  /* ---------- lineup / pipeline ---------- */
+  .lineup{
+    display:flex;
+    flex-direction:column;
+    border-left:2px solid var(--line);
+    margin-left:22px;
+  }
+  .lineup-item{
+    position:relative;
+    padding:0 0 44px 34px;
+  }
+  .lineup-item:last-child{padding-bottom:0;}
+  .lineup-num{
+    position:absolute;
+    left:-22px;top:-2px;
+    width:44px;height:44px;
+    border-radius:50%;
+    background:var(--pitch-900);
+    border:2px solid var(--gold);
+    color:var(--gold);
+    font-family:var(--mono);
+    font-weight:700;
+    font-size:15px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .lineup-item h3{
+    font-family:var(--disp);
+    text-transform:uppercase;
+    font-size:19px;
+    letter-spacing:0.02em;
+    margin:2px 0 8px;
+    color:var(--chalk);
+  }
+  .lineup-item p{
+    color:var(--chalk-dim);
+    font-size:15px;
+    max-width:620px;
+    margin:0 0 10px;
+  }
+  .tag-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .tag{
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--gold);
+    background:rgba(217,164,65,0.08);
+    border:1px solid rgba(217,164,65,0.28);
+    padding:3px 9px;
+    border-radius:2px;
+  }
+
+  /* ---------- methodology cards ---------- */
+  .card-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+  }
+  @media (max-width:760px){ .card-grid{grid-template-columns:1fr;} }
+  .card{
+    background:var(--pitch-900);
+    padding:26px 26px 24px;
+  }
+  .card h4{
+    font-family:var(--disp);
+    text-transform:uppercase;
+    font-size:16px;
+    letter-spacing:0.02em;
+    color:var(--gold);
+    margin:0 0 10px;
+  }
+  .card p{
+    color:var(--chalk-dim);
+    font-size:14.5px;
+    margin:0 0 10px;
+  }
+  .kv{
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:var(--steel);
+    display:flex;
+    justify-content:space-between;
+    border-top:1px dashed var(--line);
+    padding:6px 0;
+  }
+  .kv b{color:var(--chalk-dim);font-weight:500;}
+
+  /* ---------- honesty box ---------- */
+  .honesty{
+    border:1px solid var(--alert);
+    background:rgba(193,80,46,0.07);
+    border-radius:3px;
+    padding:26px 28px;
+    display:flex;
+    gap:20px;
+    align-items:flex-start;
+  }
+  .honesty .flag{
+    font-family:var(--mono);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--alert);
+    border:1px solid var(--alert);
+    padding:3px 8px;
+    border-radius:2px;
+    white-space:nowrap;
+    margin-top:2px;
+  }
+  .honesty p{color:var(--chalk-dim);font-size:14.5px;margin:0 0 10px;}
+  .honesty p:last-child{margin-bottom:0;}
+  .honesty b{color:var(--chalk);}
+
+  /* ---------- dashboard ---------- */
+  .dash-shell{
+    border:1px solid var(--line);
+    border-radius:3px;
+    background:var(--pitch-800);
+    overflow:hidden;
+  }
+  .drop-zone{
+    margin:20px;
+    border:2px dashed var(--line);
+    border-radius:3px;
+    padding:40px 20px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .drop-zone:hover, .drop-zone.drag{
+    border-color:var(--gold);
+    background:rgba(217,164,65,0.05);
+  }
+  .drop-zone p{margin:0 0 6px;color:var(--chalk-dim);font-size:14px;}
+  .drop-zone .dz-title{
+    font-family:var(--mono);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--chalk);
+    font-size:13px;
+    margin-bottom:8px;
+  }
+  .drop-zone input{display:none;}
+  .dz-hint{font-family:var(--mono);font-size:11.5px;color:var(--steel);}
+
+  .stat-row{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    border-top:1px solid var(--line);
+  }
+  @media (max-width:720px){ .stat-row{grid-template-columns:repeat(2,1fr);} }
+  .stat{
+    padding:20px 22px;
+    border-right:1px solid var(--line);
+  }
+  .stat:last-child{border-right:none;}
+  .stat .n{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--chalk);}
+  .stat .n.good{color:var(--ok);}
+  .stat .n.bad{color:var(--alert);}
+  .stat .l{font-family:var(--mono);font-size:11px;text-transform:uppercase;color:var(--steel);letter-spacing:0.05em;margin-top:2px;}
+
+  .table-wrap{
+    padding:20px 22px 24px;
+    overflow-x:auto;
+    border-top:1px solid var(--line);
+  }
+  table.log{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12.5px;min-width:640px;}
+  table.log th{
+    text-align:left;
+    color:var(--steel);
+    text-transform:uppercase;
+    font-size:10.5px;
+    letter-spacing:0.05em;
+    padding:8px 10px;
+    border-bottom:1px solid var(--line);
+    font-weight:500;
+  }
+  table.log td{padding:8px 10px;border-bottom:1px solid rgba(60,92,72,0.4);color:var(--chalk-dim);}
+  .pill{padding:2px 7px;border-radius:2px;font-size:11px;}
+  .pill.hit{background:rgba(91,154,111,0.15);color:var(--ok);border:1px solid rgba(91,154,111,0.4);}
+  .pill.miss{background:rgba(193,80,46,0.15);color:var(--alert);border:1px solid rgba(193,80,46,0.4);}
+  .pill.pending{background:rgba(127,154,142,0.12);color:var(--steel);border:1px solid var(--line);}
+
+  .empty-note{padding:8px 22px 22px;color:var(--steel);font-size:13px;font-family:var(--mono);}
+
+  /* ---------- footer ---------- */
+  footer{
+    border-top:1px solid var(--line);
+    padding:40px 0 60px;
+  }
+  .foot-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:20px;align-items:center;}
+  .foot-note{font-family:var(--mono);font-size:12px;color:var(--steel);}
+  .stack{display:flex;gap:8px;flex-wrap:wrap;}
+  .stack span{
+    font-family:var(--mono);font-size:11px;color:var(--chalk-dim);
+    border:1px solid var(--line);padding:3px 8px;border-radius:2px;
+  }
+
+  :focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  @media (prefers-reduced-motion:reduce){ *{scroll-behavior:auto !important;} }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <div class="brand">OVER25 <span>ULTRA</span></div>
+    <nav class="links">
+      <a href="#pipeline">PIPELINE</a>
+      <a href="#metodologia">MÉTODOS</a>
+      <a href="#historial">HISTORIAL</a>
+      <a href="#limites">LÍMITES</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="kicker">Sistema de predicción · Over/Under 2.5 goles</div>
+    <h1 class="headline">Un ensemble estadístico<br>que lee el partido<br><em>antes</em> de que empiece.</h1>
+    <p class="sub">Elo dinámico, ratings de ataque/defensa por tiros, dos modelos de Poisson y un clasificador de gradient boosting calibrado temporalmente se combinan en un consenso ponderado — y un filtro de certeza decide cuándo el sistema tiene razones reales para pronunciarse, y cuándo debe callar.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="#historial">Ver historial en vivo →</a>
+      <a class="btn btn-ghost" href="#pipeline">Cómo funciona</a>
+    </div>
+    <div class="scoreboard">
+      <div class="score-cell">
+        <span class="score-num">6</span>
+        <span class="score-label">capas del pipeline</span>
+      </div>
+      <div class="score-cell">
+        <span class="score-num">2010+</span>
+        <span class="score-label">datos históricos desde</span>
+      </div>
+      <div class="score-cell">
+        <span class="score-num">3</span>
+        <span class="score-label">modelos en consenso</span>
+      </div>
+      <div class="score-cell">
+        <span class="score-num">TS</span>
+        <span class="score-label">validación temporal (no aleatoria)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="pitchline">
+  <svg viewBox="0 0 1120 64" preserveAspectRatio="none">
+    <line x1="0" y1="32" x2="1120" y2="32" stroke="#3c5c48" stroke-width="1.5"/>
+    <circle cx="560" cy="32" r="26" fill="none" stroke="#3c5c48" stroke-width="1.5"/>
+    <circle cx="560" cy="32" r="2.5" fill="#d9a441"/>
+  </svg>
+</div>
+
+<section id="pipeline">
+  <div class="wrap">
+    <div class="eyebrow">Arquitectura</div>
+    <h2 class="h-title">La alineación del sistema</h2>
+    <p class="lede">Cada capa depende de la anterior y corre en orden estricto — así que, a diferencia de una lista de features, aquí el número sí importa: es la secuencia real del pipeline, de <code>build_dataset.py</code> a <code>predict.py</code>.</p>
+
+    <div class="lineup">
+      <div class="lineup-item">
+        <div class="lineup-num">1</div>
+        <h3>Ingesta de datos</h3>
+        <p>Resultados internacionales históricos desde 2010 (dataset público de partidos) más un enriquecimiento opcional con eventos StatsBomb (tiros, tiros a puerta, xG, aproximación de córners) cuando el torneo está cubierto.</p>
+        <div class="tag-row"><span class="tag">results.csv</span><span class="tag">StatsBomb open-data</span><span class="tag">fallback si no hay stats</span></div>
+      </div>
+      <div class="lineup-item">
+        <div class="lineup-num">2</div>
+        <h3>Elo + forma con decaimiento temporal</h3>
+        <p>Rating Elo por selección con multiplicador de margen de victoria y ventaja de local, más medias de forma con decaimiento exponencial (media vida 45 días) sobre ventanas de 8 y 25 partidos, para que un partido de hace dos años no pese igual que uno de la semana pasada.</p>
+        <div class="tag-row"><span class="tag">elo_k_base=40</span><span class="tag">home_advantage=65</span><span class="tag">decay 45d</span></div>
+      </div>
+      <div class="lineup-item">
+        <div class="lineup-num">3</div>
+        <h3>GAP ratings — ataque/defensa por proceso ofensivo</h3>
+        <p>Rating dinámico independiente del resultado: usa volumen de tiros (y córners como proxy) en vez de goles cuando hay datos reales, con fallback a una conversión gol→proceso cuando no los hay. Se actualiza partido a partido con tasas de aprendizaje distintas para ataque y defensa.</p>
+        <div class="tag-row"><span class="tag">phi_attack=0.08</span><span class="tag">phi_defense=0.06</span><span class="tag">clip [2, 35]</span></div>
+      </div>
+      <div class="lineup-item">
+        <div class="lineup-num">4</div>
+        <h3>Doble modelo de Poisson</h3>
+        <p>Dos estimaciones independientes de λ (goles esperados totales): una desde forma/Elo ("Poisson base") y otra desde los ratings GAP convertidos a goles esperados ("Poisson GAP"). Ambas ajustadas por fase del torneo y penalización de altitud.</p>
+        <div class="tag-row"><span class="tag">P(≥3 goles) = 1 − P(0,1,2)</span><span class="tag">ajuste por fase</span><span class="tag">ajuste por altitud</span></div>
+      </div>
+      <div class="lineup-item">
+        <div class="lineup-num">5</div>
+        <h3>Clasificador ML calibrado</h3>
+        <p>Gradient boosting (LightGBM si está disponible, si no scikit-learn) sobre ~50 features, validado con <b>cross-validation temporal</b> — nunca entrena con partidos futuros para predecir pasados — y calibrado con un holdout final vía regresión logística sobre las probabilidades crudas.</p>
+        <div class="tag-row"><span class="tag">temporal CV</span><span class="tag">calibración sigmoid</span><span class="tag">Brier score + AUC</span></div>
+      </div>
+      <div class="lineup-item">
+        <div class="lineup-num">6</div>
+        <h3>Consenso + filtro de certeza</h3>
+        <p>Los tres modelos se combinan con pesos dinámicos (más peso al ML cuando hay estadísticas reales disponibles). Un filtro de consenso direccional exige que <b>todos</b> los modelos apunten al mismo lado antes de emitir OVER o UNDER — si discrepan, o si el rival tiene muy pocos partidos previos, la salida es "NO APOSTAR".</p>
+        <div class="tag-row"><span class="tag">pesos dinámicos</span><span class="tag">consenso direccional</span><span class="tag">NO APOSTAR como salida válida</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="pitchline">
+  <svg viewBox="0 0 1120 64" preserveAspectRatio="none">
+    <line x1="0" y1="32" x2="1120" y2="32" stroke="#3c5c48" stroke-width="1.5"/>
+  </svg>
+</div>
+
+<section id="metodologia">
+  <div class="wrap">
+    <div class="eyebrow">Bajo el capó</div>
+    <h2 class="h-title">Detalle metodológico</h2>
+    <p class="lede">Lo que hace que esto sea un sistema y no una corazonada con Excel: cada número es trazable a una decisión de diseño concreta.</p>
+
+    <div class="card-grid">
+      <div class="card">
+        <h4>Elo con margen de victoria</h4>
+        <p>El cambio de rating no depende solo de ganar/perder, sino de <code>log(diferencia_goles+1) × 1.35</code>, y el K-factor se escala por el peso del torneo (Mundial pesa 1.0, amistoso 0.35).</p>
+        <div class="kv"><b>rating inicial</b><span>1500</span></div>
+        <div class="kv"><b>ventaja de local</b><span>+65 (0 si es neutral)</span></div>
+      </div>
+      <div class="card">
+        <h4>Ratings GAP</h4>
+        <p>Ataque y defensa se estiman por separado para condición local/visitante. Cuando hay datos StatsBomb reales se ponderan con más confianza que el fallback basado en goles convertidos a "proceso ofensivo".</p>
+        <div class="kv"><b>peso stats reales</b><span>1.0</span></div>
+        <div class="kv"><b>peso fallback</b><span>0.25</span></div>
+      </div>
+      <div class="card">
+        <h4>Consenso ponderado dinámico</h4>
+        <p>Con estadísticas avanzadas disponibles, el ML pesa más (50%) porque tiene más señal real que digerir. Sin ellas, el peso se reparte hacia los dos Poisson (45% + 40%), que son más robustos cuando falta información granular.</p>
+        <div class="kv"><b>con stats</b><span>15% / 35% / 50%</span></div>
+        <div class="kv"><b>sin stats</b><span>45% / 40% / 15%</span></div>
+      </div>
+      <div class="card">
+        <h4>Filtro de consenso direccional</h4>
+        <p>Para confirmar UNDER, ningún modelo puede superar el techo de duda (~45%). Para confirmar OVER, ninguno puede quedar por debajo del suelo (~55%). Si hay contradicción entre modelos, o varianza de goles/tiros muy alta, la decisión es "NO APOSTAR" — no se fuerza una salida.</p>
+        <div class="kv"><b>margen direccional</b><span>±5pp por defecto</span></div>
+        <div class="kv"><b>mín. partidos por equipo</b><span>5</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="pitchline">
+  <svg viewBox="0 0 1120 64" preserveAspectRatio="none">
+    <line x1="0" y1="32" x2="1120" y2="32" stroke="#3c5c48" stroke-width="1.5"/>
+    <circle cx="560" cy="32" r="26" fill="none" stroke="#3c5c48" stroke-width="1.5"/>
+    <circle cx="560" cy="32" r="2.5" fill="#d9a441"/>
+  </svg>
+</div>
+
+<section id="historial">
+  <div class="wrap">
+    <div class="eyebrow">Track record</div>
+    <h2 class="h-title">Historial de predicciones</h2>
+    <p class="lede">Carga tu CSV de predicciones (el que exporta <code>predict.py --input ... --output ...</code>, ampliado con una columna de resultado real una vez se juega el partido) y este panel calcula el histórico real — no una foto de tres partidos, sino la serie completa a fecha de hoy.</p>
+
+    <div class="dash-shell">
+      <div class="drop-zone" id="dropZone">
+        <div class="dz-title">Suelta tu CSV aquí, o haz clic para elegir el archivo</div>
+        <p>Columnas esperadas: <code>fecha</code>, <code>equipo_local</code>, <code>equipo_visitante</code>, <code>decision</code>, <code>p_over_final</code>. Opcional: <code>resultado_real</code> (OVER 2.5 / UNDER 2.5) o <code>acierto</code> (1/0) para calcular precisión.</p>
+        <span class="dz-hint">Los datos se procesan en tu navegador. No se suben a ningún servidor.</span>
+        <input type="file" id="fileInput" accept=".csv">
+      </div>
+
+      <div id="statsArea"></div>
+      <div id="tableArea"></div>
+    </div>
+  </div>
+</section>
+
+<div class="pitchline">
+  <svg viewBox="0 0 1120 64" preserveAspectRatio="none">
+    <line x1="0" y1="32" x2="1120" y2="32" stroke="#3c5c48" stroke-width="1.5"/>
+  </svg>
+</div>
+
+<section id="limites">
+  <div class="wrap">
+    <div class="eyebrow">Rigor antes que relato</div>
+    <h2 class="h-title">Lo que este sistema no es</h2>
+    <div class="honesty">
+      <div class="flag">Léase con atención</div>
+      <div>
+        <p><b>Ningún resultado a corto plazo, por bueno que sea, es evidencia estadística por sí solo.</b> Tres o cinco aciertos seguidos entran dentro de lo esperable por azar en un problema binario. Lo que sí es evidencia es el rendimiento agregado sobre un backtest histórico amplio y un log de predicciones fechadas <i>antes</i> de conocer el resultado.</p>
+        <p>El filtro de certeza está diseñado para <b>abstenerse</b> ("NO APOSTAR") cuando los modelos no coinciden, precisamente para evitar inflar el track record con casos fáciles y ocultar los difíciles.</p>
+        <p>Este proyecto documenta un sistema de estimación de probabilidades sobre eventos deportivos con fines de ingeniería y análisis de datos. No es asesoramiento financiero ni una recomendación de apuesta.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-row">
+      <div>
+        <div class="brand" style="margin-bottom:8px;">OVER25 <span>ULTRA</span></div>
+        <div class="foot-note">Pipeline: build_dataset → gap_ratings → poisson_models → ml_model → consensus → filter_certainty → predict</div>
+      </div>
+      <div class="stack">
+        <span>Python</span><span>pandas</span><span>scikit-learn</span><span>LightGBM</span><span>StatsBomb open-data</span><span>Telegram Bot API</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const statsArea = document.getElementById('statsArea');
+  const tableArea = document.getElementById('tableArea');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', e => {
+    if (e.target.files.length) handleFile(e.target.files[0]);
+  });
+
+  function handleFile(file){
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      dynamicTyping: false,
+      complete: res => render(res.data),
+      error: err => {
+        statsArea.innerHTML = '';
+        tableArea.innerHTML = '<div class="empty-note">No se pudo leer el archivo: ' + err.message + '</div>';
+      }
+    });
+  }
+
+  function pickCol(row, candidates){
+    for (const c of candidates){
+      if (c in row) return c;
+    }
+    // fallback: buscar sin distinguir mayúsculas/espacios
+    const keys = Object.keys(row);
+    for (const c of candidates){
+      const found = keys.find(k => k.toLowerCase().trim() === c.toLowerCase());
+      if (found) return found;
+    }
+    return null;
+  }
+
+  function normDecision(v){
+    if (!v) return '';
+    const s = String(v).toUpperCase();
+    if (s.includes('OVER')) return 'OVER 2.5';
+    if (s.includes('UNDER')) return 'UNDER 2.5';
+    if (s.includes('NO APOSTAR') || s.includes('NO_APOSTAR')) return 'NO APOSTAR';
+    return s;
+  }
+
+  function render(rows){
+    if (!rows.length){
+      statsArea.innerHTML = '';
+      tableArea.innerHTML = '<div class="empty-note">El archivo está vacío.</div>';
+      return;
+    }
+
+    const sample = rows[0];
+    const colFecha = pickCol(sample, ['fecha','date']);
+    const colLocal = pickCol(sample, ['equipo_local','local','home']);
+    const colVisit = pickCol(sample, ['equipo_visitante','visitante','away']);
+    const colDecision = pickCol(sample, ['decision','prediccion','observacion_no_apuesta']);
+    const colProb = pickCol(sample, ['p_over_final','confianza_apuesta','confianza_modelo']);
+    const colResultado = pickCol(sample, ['resultado_real','resultado']);
+    const colAcierto = pickCol(sample, ['acierto','hit','correcto']);
+
+    let total = 0, apostados = 0, aciertos = 0, fallos = 0, pendientes = 0;
+
+    const enriched = rows.map(r => {
+      total++;
+      const decision = normDecision(colDecision ? r[colDecision] : '');
+      let estado = 'pending';
+      let hasBet = decision === 'OVER 2.5' || decision === 'UNDER 2.5';
+      if (hasBet) apostados++;
+
+      let acierto = null;
+      if (colAcierto && r[colAcierto] !== undefined && r[colAcierto] !== ''){
+        const v = String(r[colAcierto]).trim().toLowerCase();
+        acierto = (v === '1' || v === 'true' || v === 'si' || v === 'sí');
+      } else if (colResultado && hasBet){
+        const real = normDecision(r[colResultado]);
+        if (real === 'OVER 2.5' || real === 'UNDER 2.5'){
+          acierto = (real === decision);
+        }
+      }
+
+      if (hasBet && acierto === true){ aciertos++; estado = 'hit'; }
+      else if (hasBet && acierto === false){ fallos++; estado = 'miss'; }
+      else { pendientes++; estado = 'pending'; }
+
+      return { r, decision, estado };
+    });
+
+    const resueltos = aciertos + fallos;
+    const accuracy = resueltos > 0 ? (aciertos / resueltos * 100) : null;
+
+    statsArea.innerHTML = `
+      <div class="stat-row">
+        <div class="stat"><div class="n">${total}</div><div class="l">Predicciones cargadas</div></div>
+        <div class="stat"><div class="n">${apostados}</div><div class="l">Con decisión (Over/Under)</div></div>
+        <div class="stat"><div class="n ${accuracy===null?'':(accuracy>=55?'good':(accuracy<45?'bad':''))}">${accuracy===null ? '—' : accuracy.toFixed(1)+'%'}</div><div class="l">Precisión sobre resueltos (${resueltos})</div></div>
+        <div class="stat"><div class="n">${pendientes}</div><div class="l">Pendientes de resultado</div></div>
+      </div>
+    `;
+
+    if (!colResultado && !colAcierto){
+      statsArea.innerHTML += `<div class="empty-note">No se encontró columna de resultado (<code>resultado_real</code> o <code>acierto</code>) — mostrando solo las decisiones cargadas, sin calcular precisión. Añade esa columna partido a partido según se van jugando.</div>`;
+    }
+
+    const rowsHtml = enriched.slice(0, 200).map(({r, decision, estado}) => {
+      const fecha = colFecha ? (r[colFecha] || '') : '';
+      const local = colLocal ? (r[colLocal] || '') : '';
+      const visit = colVisit ? (r[colVisit] || '') : '';
+      const prob = colProb ? (r[colProb] || '') : '';
+      const pillClass = estado === 'hit' ? 'hit' : (estado === 'miss' ? 'miss' : 'pending');
+      const pillText = estado === 'hit' ? 'ACIERTO' : (estado === 'miss' ? 'FALLO' : 'PENDIENTE');
+      return `<tr>
+        <td>${fecha}</td>
+        <td>${local} vs ${visit}</td>
+        <td>${decision || '—'}</td>
+        <td>${prob}</td>
+        <td><span class="pill ${pillClass}">${pillText}</span></td>
+      </tr>`;
+    }).join('');
+
+    tableArea.innerHTML = `
+      <div class="table-wrap">
+        <table class="log">
+          <thead>
+            <tr><th>Fecha</th><th>Partido</th><th>Decisión</th><th>P(Over)</th><th>Estado</th></tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        ${rows.length > 200 ? `<div class="empty-note">Mostrando las primeras 200 de ${rows.length} filas.</div>` : ''}
+      </div>
+    `;
+  }
+})();
+</script>
+
+</body>
+</html>
