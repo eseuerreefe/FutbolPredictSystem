@@ -1,159 +1,159 @@
-# FutbolPredictSystem — OVER2.5 
+# FutbolPredictSystem — OVER 2.5
 
-Sistema de predicción **Over/Under 2.5 goles** para partidos de fútbol internacional (con foco en Mundial), con salida integrada vía bot de Telegram.
+Over/Under 2.5 goals prediction system for international football matches (World Cup–focused), with output delivered through a Telegram bot.
 
-> **Nota sobre la naturaleza del sistema:** este proyecto **no es una red neuronal**. Es un **sistema ensemble** que combina un modelo estadístico clásico (Poisson), un modelo de *gradient boosting* (LightGBM, con fallback a scikit-learn) y una capa de reglas (rating ELO propio, filtro de certeza). Ninguno de esos componentes es una red neuronal — LightGBM entrena árboles de decisión, no capas de neuronas. Es importante decirlo así de claro porque es un diseño **más robusto y explicable** que una red neuronal para este caso (poco volumen de datos históricos, necesidad de auditar por qué el sistema dice lo que dice, y cero tolerancia a "cajas negras" cuando hay decisiones de apuesta de por medio).
+> **A note on what this system actually is:** this project is **not a neural network**. It's an **ensemble system** that combines a classical statistical model (Poisson), a gradient boosting model (LightGBM, with a scikit-learn fallback), and a rules layer (a custom ELO rating, a certainty filter). None of those components is a neural network — LightGBM trains decision trees, not layers of neurons. This is worth stating clearly, because this design is actually **more robust and explainable** than a neural network for this use case (limited historical data, the need to audit why the system says what it says, and zero tolerance for "black boxes" when betting decisions are involved).
 
 ---
 
-## 1. Qué hace el sistema
+## 1. What the system does
 
-Dado un partido (o una lista de partidos en CSV), el sistema estima la probabilidad de que se marquen **más o menos de 2.5 goles** y devuelve una recomendación con su nivel de confianza — o `NO APOSTAR` si la señal es débil o contradictoria.
+Given a match (or a list of matches in a CSV), the system estimates the probability that the match will finish **over or under 2.5 goals**, and returns a recommendation with a confidence level — or `NO APOSTAR` (DO NOT BET) if the signal is weak or contradictory.
 
-El diseño prioriza **no romperse y no sobreestimar certeza** por encima de maximizar aciertos a toda costa: prefiere abstenerse antes que dar un 100% falso.
+The design prioritizes **not breaking and not overstating certainty** over maximizing hit rate at all costs: it would rather abstain than return a false 100%.
 
-## 2. Arquitectura — pipeline de decisión
+## 2. Architecture — decision pipeline
 
-El sistema no usa un único modelo, sino que combina varias fuentes de señal en capas, y solo al final las mezcla:
+The system doesn't rely on a single model. It combines several signal sources in layers, and only mixes them at the very end:
 
 ```
                     ┌─────────────────────┐
-                    │   Datos de partido   │
-                    │ (equipos, fecha,     │
-                    │  sede, fase, etc.)   │
+                    │     Match data       │
+                    │ (teams, date, venue,  │
+                    │  stage, etc.)         │
                     └──────────┬───────────┘
                                │
         ┌──────────────────────┼──────────────────────┐
         ▼                      ▼                       ▼
  ┌──────────────┐     ┌────────────────┐      ┌────────────────┐
- │  ELO propio   │     │  GAP ratings   │      │ StatsBomb (opt) │
- │ forma/ritmo/  │     │ (proceso: xG/  │      │ tiros/xG reales │
- │ descanso/fase │     │ tiros o goles) │      │ si están         │
+ │  Custom ELO   │     │  GAP ratings   │      │ StatsBomb (opt) │
+ │ form/pace/    │     │ (process: xG/  │      │ real shots/xG   │
+ │ rest/stage    │     │ shots or goals)│      │ when available  │
  └───────┬───────┘     └───────┬────────┘      └────────┬────────┘
          │                     │                        │
          ▼                     ▼                        ▼
  ┌────────────────┐   ┌─────────────────┐      ┌─────────────────┐
- │ Poisson base    │   │  Poisson GAP    │      │  ML calibrado   │
- │ (estable)       │   │  (avanzado)     │      │ LightGBM/sklearn│
+ │  Base Poisson   │   │  GAP Poisson    │      │  Calibrated ML   │
+ │  (stable)       │   │  (advanced)     │      │ LightGBM/sklearn │
  └────────┬────────┘   └────────┬────────┘      └────────┬────────┘
           │                     │                         │
           └───────────┬─────────┴────────────┬────────────┘
                        ▼                      ▼
               ┌─────────────────┐    ┌──────────────────┐
-              │   Consenso final │───▶│ Filtro de certeza │
-              │ (mezcla ponderada)│    │ (bloquea señales  │
-              └─────────────────┘    │  flojas/contrad.) │
+              │  Final consensus  │───▶│ Certainty filter  │
+              │ (weighted blend)  │    │ (blocks weak/     │
+              └─────────────────┘    │ contradictory calls)│
                                       └─────────┬─────────┘
                                                 ▼
-                                  Predicción final: Over / Under /
-                                       NO APOSTAR + confianza
+                                  Final prediction: Over / Under /
+                                       DO NOT BET + confidence
 ```
 
-**Por qué en capas y no un solo modelo:** cada capa cubre el punto débil de la anterior. El Poisson base nunca falla porque solo necesita goles históricos. El GAP (proceso, no resultado) y StatsBomb añaden precisión cuando hay datos de tiros/xG reales, pero **no se activan a la fuerza** si esos datos no existen o están imputados. El ML aporta no-linealidad, pero está calibrado para no contradecir al Poisson sin motivo. El consenso evita que un solo modelo "raro" decida el partido, y el filtro de certeza es el que realmente protege del sobreajuste: si las señales no coinciden, el sistema **se calla** en vez de arriesgar.
+**Why layers instead of a single model:** each layer covers the previous one's blind spot. The base Poisson never fails because it only needs historical goals. GAP (process, not outcome) and StatsBomb add precision when real shot/xG data exists, but they're **never forced** if that data is missing or imputed. ML adds non-linearity, but it's calibrated to not contradict Poisson without reason. The consensus stage prevents a single "odd" model from deciding the match on its own, and the certainty filter is what actually protects against overconfidence: if the signals disagree, the system **stays quiet** instead of taking a risk.
 
-## 3. Componentes del pipeline (mapa de archivos)
+## 3. Pipeline components (file map)
 
-| Etapa | Archivo | Qué hace |
+| Stage | File | What it does |
 |---|---|---|
-| Datos | `data_sources.py`, `fetch_fixtures.py`, `bot_fixtures_patch.py` | Obtención de partidos/fixtures (incl. integraciones con Telegram) |
-| Construcción de dataset | `build_dataset.py` | Genera el histórico de entrenamiento (con o sin StatsBomb, flag `--no-statsbomb`) |
-| Features | `features.py` | ELO, forma de goles, ritmo reciente, descanso, fase del torneo |
-| Rating de proceso | `gap_ratings.py` | GAP ratings (tiros/xG reales con fallback a goles) |
-| Modelos probabilísticos | `poisson_models.py` | Poisson base + Poisson GAP |
-| Modelo ML | `ml_model.py` | LightGBM calibrado, con fallback a scikit-learn si LightGBM no está disponible |
-| Mezcla final | `consensus.py` | Combina Poisson base + Poisson GAP + ML en una única probabilidad |
-| Control de riesgo | `filter_certainty.py` | Bloquea la apuesta (`NO APOSTAR`) si la señal es floja o contradictoria |
-| Entrenamiento | `train.py` | Entrena GAP, Poisson y ML sobre el dataset construido |
-| Predicción | `predict.py` | Predice un partido suelto o un CSV de partidos |
-| Validación | `backtest.py` | Backtest rápido del filtro de certeza sobre histórico |
-| Orquestador | `run_system.py` | Ejecuta el flujo completo de principio a fin |
-| Configuración | `config.py` | Todos los parámetros del sistema en un solo sitio |
-| Utilidades | `utils.py` | Funciones auxiliares comunes |
-| Bot de Telegram | `telegram_bot_free.py`, `telegram_fixtures_manager.py` | Interfaz de usuario vía Telegram: consulta de predicciones y próximos partidos |
-| Datos de referencia | `partidos_mundial.csv`, `partidos_ejemplo.csv`, `telegram_fixtures_worldcup.csv`, `pm.csv` | Datasets de partidos usados por el sistema |
+| Data | `data_sources.py`, `fetch_fixtures.py`, `bot_fixtures_patch.py` | Fetches matches/fixtures (including Telegram integrations) |
+| Dataset build | `build_dataset.py` | Builds the historical training dataset (with or without StatsBomb, `--no-statsbomb` flag) |
+| Features | `features.py` | ELO, recent goal form, recent pace, rest days, tournament stage |
+| Process rating | `gap_ratings.py` | GAP ratings (real shots/xG with fallback to goals) |
+| Probabilistic models | `poisson_models.py` | Base Poisson + GAP Poisson |
+| ML model | `ml_model.py` | Calibrated LightGBM, with a scikit-learn fallback if LightGBM isn't available |
+| Final blend | `consensus.py` | Combines base Poisson + GAP Poisson + ML into a single probability |
+| Risk control | `filter_certainty.py` | Blocks the bet (`NO APOSTAR`) if the signal is weak or contradictory |
+| Training | `train.py` | Trains GAP, Poisson, and ML on the built dataset |
+| Prediction | `predict.py` | Predicts a single match or a CSV of matches |
+| Validation | `backtest.py` | Quick backtest of the certainty filter against historical data |
+| Orchestrator | `run_system.py` | Runs the full pipeline end to end |
+| Configuration | `config.py` | All system parameters in one place |
+| Utilities | `utils.py` | Shared helper functions |
+| Telegram bot | `telegram_bot_free.py`, `telegram_fixtures_manager.py` | User-facing Telegram interface: predictions and upcoming fixtures |
+| Reference data | `partidos_mundial.csv`, `partidos_ejemplo.csv`, `telegram_fixtures_worldcup.csv`, `pm.csv` | Match datasets used by the system |
 
-## 4. Instalación
+## 4. Installation
 
 ```bat
 cd /d D:\Mundial\over25_ultra_free
 pip install -r requirements.txt
 ```
 
-LightGBM es opcional pero recomendado (si falla, el sistema usa scikit-learn automáticamente):
+LightGBM is optional but recommended (if it fails to install, the system automatically falls back to scikit-learn):
 
 ```bat
 pip install lightgbm
 ```
 
-## 5. Uso
+## 5. Usage
 
-**1. Construir el dataset histórico:**
+**1. Build the historical dataset:**
 ```bat
 python build_dataset.py
 ```
-Para saltar la integración con StatsBomb (más rápido, menos preciso):
+To skip the StatsBomb integration (faster, less precise):
 ```bat
 python build_dataset.py --no-statsbomb
 ```
 
-**2. Entrenar los modelos:**
+**2. Train the models:**
 ```bat
 python train.py
 ```
 
-**3. Predecir un partido concreto:**
+**3. Predict a single match:**
 ```bat
 python predict.py "South Africa" "Canada" --sede "Los Angeles" --fase "Dieciseisavos" --fecha "2026-06-28" --dias-local 3 --dias-visitante 3
 ```
 
-**4. Predecir un CSV de partidos:**
+**4. Predict a CSV of matches:**
 ```bat
 python predict.py --input partidos_ejemplo.csv --output outputs\predicciones_ultra.csv
 ```
 
-**5. Ejecutar el flujo completo:**
+**5. Run the full pipeline:**
 ```bat
 python run_system.py --input partidos_ejemplo.csv
 ```
 
-## 6. Salida del sistema
+## 6. Expected output
 
-Para cada partido, el sistema muestra:
+For each match, the system shows:
 
-- Probabilidad Over según Poisson base
-- Probabilidad Over según Poisson GAP
-- Probabilidad Over según ML calibrado
-- Probabilidad final Over/Under (consenso)
-- Confianza del modelo
-- Confianza de apuesta
-- Bloqueos aplicados por el filtro de certeza (si los hay)
+- Base Poisson Over probability
+- GAP Poisson Over probability
+- Calibrated ML Over probability
+- Final Over/Under probability (consensus)
+- Model confidence
+- Betting confidence
+- Any blocks applied by the certainty filter
 
-Si la salida es `NO APOSTAR`, **no es un fallo del sistema**: significa que no detecta ventaja suficiente para recomendar una posición.
+If the output is `NO APOSTAR` (DO NOT BET), **that's not a failure** — it means the system doesn't detect a sufficient edge to recommend a position.
 
-## 7. Decisiones de diseño deliberadas
+## 7. Deliberate design decisions
 
-Estas son restricciones que el sistema respeta a propósito, para evitar los errores típicos de este tipo de proyectos:
+These are constraints the system enforces on purpose, to avoid the typical failure modes of this kind of project:
 
-- No trata datos imputados (estimados) como si fueran datos reales.
-- No deja que LightGBM contradiga al Poisson sin control.
-- No aplica calibración isotónica cuando hay pocos datos (sobreajusta).
-- No fuerza varianzas a cero artificialmente.
-- No muestra un 100% de confianza salvo que la calibración lo justifique realmente, y aun así el valor se recorta entre 0.1% y 99.9%.
+- Doesn't treat imputed (estimated) data as if it were real data.
+- Doesn't let LightGBM contradict Poisson without control.
+- Doesn't apply isotonic calibration when data is scarce (it overfits).
+- Doesn't force variances to zero artificially.
+- Doesn't show 100% confidence unless calibration genuinely justifies it, and even then the value is clipped between 0.1% and 99.9%.
 
-## 8. Limitaciones
+## 8. Limitations
 
-- No existe ningún modelo 100% fiable en apuestas deportivas; este sistema no lo pretende.
-- La calidad de las predicciones depende de la disponibilidad de datos de StatsBomb (tiros/xG reales); sin ellos, el sistema degrada de forma controlada al fallback por goles, pero con menos precisión.
-- Pensado y ajustado para competiciones internacionales tipo Mundial; su rendimiento en ligas domésticas no está validado del mismo modo.
+- No model is 100% reliable for sports betting; this system doesn't claim to be.
+- Prediction quality depends on the availability of StatsBomb data (real shots/xG); without it, the system degrades in a controlled way to the goals-based fallback, but with lower precision.
+- Designed and tuned for international tournaments like the World Cup; performance on domestic leagues hasn't been validated in the same way.
 
-## 9. Estructura del repositorio
+## 9. Repository structure
 
 ```
-data/                                  # Datos crudos/procesados
-fotos/                                 # Recursos visuales
-models/                                # Modelos entrenados serializados
-outputs/                               # Predicciones generadas
-over25_ultra_free_project_FIX2_src/    # Código fuente (versión de trabajo)
+data/                                  # Raw/processed data
+fotos/                                 # Visual assets
+models/                                # Serialized trained models
+outputs/                               # Generated predictions
+over25_ultra_free_project_FIX2_src/    # Source code (working version)
 __init__.py
 config.py
 data_sources.py
@@ -176,6 +176,6 @@ telegram_fixtures_manager.py
 requirements.txt
 ```
 
-## 10. Roadmap / estado
+## 10. Roadmap / status
 
-Proyecto en desarrollo activo, construido de forma iterativa (asistido por IA + ajustes manuales). Ver `Memoria_tecnica_bot_prediccion_over25_estilo...` para el detalle técnico completo del proceso de construcción.
+Actively developed project, built iteratively (AI-assisted plus manual adjustments). See `Memoria_tecnica_bot_prediccion_over25_estilo...` for the full technical breakdown of the build process.
