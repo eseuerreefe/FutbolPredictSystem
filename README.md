@@ -1,4 +1,4 @@
-# FutbolPredictSystem — OVER25 ULTRA FREE
+# FutbolPredictSystem — OVER2.5 
 
 Sistema de predicción **Over/Under 2.5 goles** para partidos de fútbol internacional (con foco en Mundial), con salida integrada vía bot de Telegram.
 
