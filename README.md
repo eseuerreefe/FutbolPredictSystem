@@ -4,7 +4,7 @@ Sistema de predicción Over/Under 2.5 para fútbol internacional.
 
 ## Qué es
 
-Este proyecto une lo mejor del modelo simple que te funcionó con la arquitectura compleja del Prompt 2:
+Red neuronal simple para la prediccion de goles de los partidos del mundial, implementado en telegram:
 
 1. **Base robusta**: ELO propio + forma de goles + ritmo reciente + descanso + fase.
 2. **StatsBomb opcional**: tiros/xG reales cuando existen, sin bloquear cuando faltan.
